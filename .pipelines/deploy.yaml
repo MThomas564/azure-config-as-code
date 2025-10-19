@@ -2,7 +2,7 @@ trigger:
   - main
 
 pool:
-  name: Default
+  {{POOL OPTIONS HERE}}
 
 jobs:
   - job: Prepare_Config
@@ -45,7 +45,7 @@ jobs:
     displayName: 'Deploy to Dev'
     dependsOn: Prepare_Config
     pool: 
-      name: Default
+      {{POOL OPTIONS HERE}}
     steps:
       - task: DownloadBuildArtifacts@0
         inputs:
@@ -58,5 +58,5 @@ jobs:
           environment: 'dev'
           configFile: 'config/dev.json'
           flattenedFile: '$(Pipeline.Workspace)/flattened-configs/dev.flattened.json'
-          appConfigEndpoint: 'https://mtappconfdemo.azconfig.io'
-          azureSubscription: 'sc-ado-sub1'
+          appConfigEndpoint: '{{APP CONFIG HERE}}'
+          azureSubscription: '{{AZURE SUBSCRIPTION HERE}}'

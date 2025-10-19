@@ -74,9 +74,25 @@ This repository demonstrates a pattern for managing [Azure App Configuration](ht
    git clone <this-repo-url>
    ```
 2. **Update configuration files** in `config/` for your application and environments.
-3. **Set up your Azure Pipeline** using the provided YAML files.
+3. **Set up your Azure Pipeline** using the provided YAML files. You will need to update the following placeholders in `.pipelines/deploy.yaml`:
+   - `{{POOL OPTIONS HERE}}`: Specify your Azure DevOps agent pool (e.g., `name: 'Azure Pipelines'` or your custom pool).
+   - `{{APP CONFIG HERE}}`: The endpoint URL of your Azure App Configuration instance (e.g., `https://<your-app-config-name>.azconfig.io`).
+   - `{{AZURE SUBSCRIPTION HERE}}`: The name or ID of the Azure subscription service connection to use for deployment.
+   - You may also need to update the `environment`, `configFile`, and `flattenedFile` parameters if you add more environments or change file names.
 4. **Run the pipeline** to validate, approve, and publish your configuration.
 
 ## Licence
 
 This repository is provided as an example. Adapt and use as needed for your organisation.
+
+---
+
+### Required User Configuration
+
+Before running the pipeline, ensure you have set the following in `.pipelines/deploy.yaml`:
+
+- **Agent Pool:** Replace `{{POOL OPTIONS HERE}}` with your Azure DevOps agent pool configuration.
+- **App Configuration Endpoint:** Replace `{{APP CONFIG HERE}}` with your Azure App Configuration endpoint.
+- **Azure Subscription:** Replace `{{AZURE SUBSCRIPTION HERE}}` with your Azure subscription service connection name or ID.
+
+If you add new environments or configuration files, update the relevant parameters in the pipeline accordingly.
