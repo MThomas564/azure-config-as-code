@@ -1,0 +1,48 @@
+parameters:
+  - name: environment
+    type: string
+  - name: configFile
+    type: string
+  - name: flattenedFile
+    type: string
+  - name: appConfigEndpoint
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: enableApproval
+    type: boolean
+    default: false
+  - name: approvers
+    type: object
+    default: []
+
+
+steps:
+  - task: AzureAppConfigurationImport@10
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      AppConfigurationEndpoint: ${{ parameters.appConfigEndpoint }}
+      ConfigurationFile: ${{ parameters.flattenedFile }}
+      Separator: ':'
+      Depth: '1'
+      ExcludeFeatureFlags: true
+      Strict: false
+      DryRun: true
+  
+  - task: ManualValidation@0
+    condition: eq(${{ parameters.enableApproval }}, true)
+    inputs:
+      notifyUsers: ''
+      approvers: ${{ join(parameters.approvers, ',') }}
+    displayName: 'Manual Approval'
+
+  - task: AzureAppConfigurationImport@10
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      AppConfigurationEndpoint: ${{ parameters.appConfigEndpoint }}
+      ConfigurationFile: ${{ parameters.flattenedFile }}
+      Separator: ':'
+      Depth: '1'
+      ExcludeFeatureFlags: true
+      Strict: false
+

@@ -1,0 +1,18 @@
+{
+    "AppName": "MyApplication",
+    "Environment": "Development",
+    "FinBuckle:MultiTenant:Stores:ConfigurationStore": {
+        "Tenants": [
+            {
+                "Id": "tenant1",
+                "Name": "Tenant One",
+                "EnableLookup": true
+            },
+            {
+                "Id": "tenant2",
+                "Name": "Tenant Two",
+                "EnableLookup": false
+            }
+        ]
+    }
+}
