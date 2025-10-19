@@ -1,0 +1,71 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+
+steps:
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: 'config'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
+- powershell: |
+    $json = Get-Content "config/dev.json" | ConvertFrom-Json
+    $flat = @{}
+    foreach ($key in $json.PSObject.Properties.Name) {
+        $value = $json.$key
+        if ($value -is [System.Collections.IEnumerable] -and !$value.GetType().IsPrimitive -and $value.GetType().Name -ne 'String') {
+            $flat[$key] = $value | ConvertTo-Json -Compress
+        } elseif ($value -is [PSCustomObject]) {
+            $flat[$key] = $value | ConvertTo-Json -Compress
+        } else {
+            $flat[$key] = $value
+        }
+    }
+    $flat | ConvertTo-Json -Compress | Set-Content "config/dev.flattened.json"
+  displayName: 'Flatten all complex objects in dev.json for Azure App Configuration'
+
+- task: AzureAppConfigurationImport@10
+  inputs:
+    azureSubscription: ''
+    AppConfigurationEndpoint: ''
+    ConfigurationFile: 'config/dev.flattened.json'
+    Separator: ':'
+    Depth: '1'
+    ExcludeFeatureFlags: true
+    Strict: false
+    DryRun: true
+
+# - task: ManualValidation@1
+#   inputs:
+#     notifyUsers: ''
+#     approvers: ''
+
+- task: AzureAppConfigurationImport@10
+  inputs:
+    azureSubscription: ''
+    AppConfigurationEndpoint: ''
+    ConfigurationFile: 'config/dev.flattened.json'
+    Separator: ':'
+    Depth: '1'
+    ExcludeFeatureFlags: true
+    Strict: false
+
+# - task: AzureAppConfigurationSnapshot@1
+#   inputs:
+#     azureSubscription: ''
+#     AppConfigurationEndpoint: ''
+#     SnapshotName: 'dev-$(BuildId)'
+#     CompositionType: 'key'
