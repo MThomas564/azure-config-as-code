@@ -1,0 +1,30 @@
+trigger: none
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - config/*.json
+      - schema/*.schema.json
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+
+- task: PowerShell@2
+  displayName: 'Validate config files against schema'
+  inputs:
+    targetType: 'inline'
+    script: |
+      [array]$jsonFiles=Get-ChildItem .\config\*.json | select -expand fullname
+      
+      foreach ($filePath in $jsonFiles)
+      {
+        Write-Host "Validating $filePath"
+        Get-Content $filePath -Raw | Test-Json -SchemaFile .\schema\config.schema.json
+      }
+    pwsh: true
+    failOnStderr: true
