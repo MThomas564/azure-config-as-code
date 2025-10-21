@@ -8,7 +8,28 @@ This repository demonstrates a pattern for managing [Azure App Configuration](ht
 - **Flattening Complex Structures:** Automatically flattens complex JSON objects before publishing to Azure App Configuration, allowing you to use nested or complex objects in your source files.
 - **Immutable Rollback:** Publishes the flattened configuration as a build artefact before deployment, providing an immutable rollback point for each release.
 - **Dry Run & Approval:** Supports a dry run mode and optional manual approval step before publishing changes to Azure App Configuration.
-- **Pipeline-Driven:** Uses Azure Pipelines YAML for automation, including dry run, artefact publishing, and deployment.
+
+**Pipeline-Driven:** Uses Azure Pipelines YAML for automation, including dry run, artefact publishing, and deployment.
+
+## Pipeline Templates & JSON Schema Validation
+
+This repository now uses pipeline templates and a JSON schema for robust configuration management:
+
+- **Pipeline Templates:**
+   - `.pipelines/prepare-template.yaml` validates your config files against the schema and converts them to a key-value format for Azure App Configuration.
+   - `.pipelines/deploy-template.yaml` handles dry run, manual approval, and publishing to Azure App Configuration using parameterized steps.
+
+- **JSON Schema Validation:**
+   - The schema in `schema/config.schema.json` ensures your config files are valid and conform to expected structure and types before deployment.
+   - Validation is performed automatically in the pipeline, and errors will block deployment until resolved.
+
+### How to Use
+
+1. Place your environment config files in `config/` (e.g., `dev.json`).
+2. Update or extend the schema in `schema/config.schema.json` as needed for your application.
+3. The pipeline will validate, flatten, and publish your configs using the templates provided.
+
+See the pipeline YAML files and schema for more details and customization options.
 
 ## Repository Structure
 
