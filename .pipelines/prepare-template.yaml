@@ -3,12 +3,12 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        [array]$jsonFiles=Get-ChildItem .\config\*.json -exclude config.schema.json | select -expand fullname
+        [array]$jsonFiles=Get-ChildItem .\config\*.json | select -expand fullname
         
               foreach ($filePath in $jsonFiles)
               {
                 Write-Host "Validating $filePath"
-                Get-Content $filePath -Raw | Test-Json -SchemaFile .\config\config.schema.json
+                Get-Content $filePath -Raw | Test-Json -SchemaFile .\schema\config.schema.json
               }
       pwsh: true
 
