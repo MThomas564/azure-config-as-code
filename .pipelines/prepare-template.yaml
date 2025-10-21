@@ -1,0 +1,39 @@
+steps:
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        [array]$jsonFiles=Get-ChildItem .\config\*.json -exclude config.schema.json | select -expand fullname
+        
+              foreach ($filePath in $jsonFiles)
+              {
+                Write-Host "Validating $filePath"
+                Get-Content $filePath -Raw | Test-Json -SchemaFile .\config\config.schema.json
+              }
+      pwsh: true
+
+  - task: PowerShell@2
+    displayName: 'Convert all typed configs to KVSet format'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $typedFiles = Get-ChildItem -Path config -Filter *.json
+        foreach ($file in $typedFiles) {
+          $outName = $file.BaseName + ".kv.json"
+          pwsh -File ./scripts/convert-to-kvset.ps1 -InputFile $file.FullName -OutputFile (Join-Path $file.DirectoryName $outName)
+        }
+
+
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: 'config'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      replaceExistingArchive: true
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: 'config'
+      ArtifactName: 'flattened-configs'
+      publishLocation: 'Container'

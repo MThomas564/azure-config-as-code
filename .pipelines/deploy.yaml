@@ -6,40 +6,10 @@ pool:
 
 jobs:
   - job: Prepare_Config
-    displayName: 'Archive and Publish Config Snapshot'
+    displayName: 'Prepare Configuration Files'
     steps:
-      - powershell: |
-          Get-ChildItem -Path config -Filter *.json | Where-Object { $_.Name -notlike '*.flattened.json' } | ForEach-Object {
-            $json = Get-Content $_.FullName | ConvertFrom-Json
-            $flat = @{}
-            foreach ($key in $json.PSObject.Properties.Name) {
-              $value = $json.$key
-              if ($value -is [System.Collections.IEnumerable] -and !$value.GetType().IsPrimitive -and $value.GetType().Name -ne 'String') {
-                $flat[$key] = $value | ConvertTo-Json -Compress
-              } elseif ($value -is [PSCustomObject]) {
-                $flat[$key] = $value | ConvertTo-Json -Compress
-              } else {
-                $flat[$key] = $value
-              }
-            }
-            $flattenedPath = "config/$($_.BaseName).flattened.json"
-            $flat | ConvertTo-Json -Compress | Set-Content $flattenedPath
-          }
-        displayName: 'Flatten all config JSON files'
-
-      - task: ArchiveFiles@2
-        inputs:
-          rootFolderOrFile: 'config'
-          includeRootFolder: false
-          archiveType: 'zip'
-          archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-          replaceExistingArchive: true
-
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: 'config'
-          ArtifactName: 'flattened-configs'
-          publishLocation: 'Container'
+      - template: prepare-template.yaml
+    
 
   - job: Deploy_Dev
     displayName: 'Deploy to Dev'
@@ -56,7 +26,7 @@ jobs:
       - template: deploy-template.yaml
         parameters:
           environment: 'dev'
-          configFile: 'config/dev.json'
-          flattenedFile: '$(Pipeline.Workspace)/flattened-configs/dev.flattened.json'
+          configFile: 'config/dev.kv.json'
+          flattenedFile: '$(Pipeline.Workspace)/flattened-configs/dev.kv.json'
           appConfigEndpoint: '{{APP CONFIG HERE}}'
           azureSubscription: '{{AZURE SUBSCRIPTION HERE}}'

@@ -1,18 +1,95 @@
 {
-    "AppName": "MyApplication",
-    "Environment": "Development",
-    "FinBuckle:MultiTenant:Stores:ConfigurationStore": {
-        "Tenants": [
-            {
-                "Id": "tenant1",
-                "Name": "Tenant One",
-                "EnableLookup": true
-            },
-            {
-                "Id": "tenant2",
-                "Name": "Tenant Two",
-                "EnableLookup": false
+    "$schema": "./config.schema.json",
+    "items": [
+        {
+            "key": "item1",
+            "value": "test",
+            "label": "testLabel",
+            "type": "string"
+        },
+        {
+            "key": "ApiEndpoint",
+            "value": "https://api.example.com/v1/",
+            "type": "string"
+        },
+        {
+            "key": ".appconfig.featureflag/FeatureFlag",
+            "type": "featureflag",
+            "value": {
+                "id": "MyFeature",
+                "enabled": true
             }
-        ]
-    }
+        },
+        {
+            "key": "MaxItems",
+            "value": 100,
+            "type": "string"
+        },
+        {
+            "key": "LogLevel",
+            "value": "Debug",
+            "type": "string"
+        },
+        {
+            "key": "ConnectionString",
+            "value": "Server=tcp:dummy.database.windows.net,1433;Initial Catalog=DummyDb;User ID=admin;Password=Password123;",
+            "type": "string"
+        },
+        {
+            "key": "TimeoutSeconds",
+            "value": 30,
+            "type": "string"
+        },
+        {
+            "key": "ClientId",
+            "value": "12345678-1234-1234-1234-123456789abc",
+            "type": "string"
+        },
+        {
+            "key": "TenantId",
+            "value": "87654321-4321-4321-4321-cba987654321",
+            "type": "string"
+        },
+        {
+            "key": "Authority",
+            "value": "https://login.microsoftonline.com/87654321-4321-4321-4321-cba987654321",
+            "type": "string"
+        },
+        {
+            "key": "ApiKey",
+            "value": {
+                "uri": "https://{{KEY VAULT NAME}}.vault.azure.net/secrets/subscription-key"
+            },
+            "type": "keyvault"
+        },
+        {
+            "key": "Finbuckle:MultiTenant:Stores:ConfigurationStore:Tenants",
+            "value": 
+                [
+                    {
+                        "Id": "910eb0bf-6a57-454b-8458-f3e299591684",
+                        "Identifier": "910eb0bf-6a57-454b-8458-f3e299591684",
+                        "Name": "Test1",
+                        "Keys": [
+                            {
+                                "Name": "TestKey1",
+                                "Value": "53d9262b-a83a-4f31-b4bc-213187a59eb2"
+                            }
+                        ]
+                    },
+                    {
+                        "Id": "b987448b-5418-4ef8-8a71-f55ea16cf156",
+                        "Identifier": "b987448b-5418-4ef8-8a71-f55ea16cf156",
+                        "Name": "Test2",
+                        "Keys": [
+                            {
+                                "Name": "TestKey2",
+                                "Value": "8327d419-f013-490e-8466-8fb6f0a5a15e"
+                            }
+                        ]
+                    }
+                ],
+            "type": "json"
+        }
+    ]
 }

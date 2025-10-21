@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "config.schema.json",
+  "title": "Azure-Config-As-Code",
+  "description": "Schema to validate JSON for use within Azure Config as Code.",
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "value", "type"],
+        "properties": {
+          "key": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["string", "json", "featureflag", "keyvault"]
+          },
+          "label": { "type": "string" },
+          "tags": { "type": "object" },
+          "value": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" },
+              { "type": "boolean" },
+              { "type": "object" },
+              { "type": "array" }
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "type": { "const": "json" } } },
+            "then": { "properties": { "value": { "type": ["object", "array"] } } }
+          },
+          {
+            "if": { "properties": { "type": { "const": "featureflag" } } },
+            "then": {
+              "properties": {
+                "value": {
+                  "type": "object",
+                  "required": ["id", "enabled"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "enabled": { "type": "boolean" },
+                    "conditions": {
+                      "type": "object",
+                      "properties": {
+                        "client_filters": { "type": "array" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": { "properties": { "type": { "const": "keyvault" } } },
+            "then": {
+              "properties": {
+                "value": {
+                  "type": "object",
+                  "required": ["uri"],
+                  "properties": {
+                    "uri": { "type": "string", "pattern": "^https://.*\\.vault\\.azure\\.net/secrets/.*" }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": ["items"]
+}
