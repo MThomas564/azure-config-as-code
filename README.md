@@ -56,6 +56,21 @@ See the pipeline YAML files and schema for more details and customization option
 5. **Publish to Azure App Configuration:**
    - Upon approval, the pipeline publishes the flattened configuration to the specified Azure App Configuration instance.
 
+
+## Supported Data Types & Handling
+
+Your configuration schema supports several data types, each handled specifically during conversion to Azure App Configuration KVSet format:
+
+- **string**: Stored as plain text (`content_type: text/plain`).
+- **json**: Stored as a compressed JSON string (`content_type: application/json`).
+- **jsonarray**: Each array item is split into individual keys with an index (e.g., `key:0`, `key:1`), stored as compressed JSON (`content_type: application/json`).
+- **featureflag**: Stored in Azure App Configuration feature flag format (`content_type: application/vnd.microsoft.appconfig.ff+json;charset=utf-8`). Keys are prefixed with `.appconfig.featureflag/` if not already present.
+- **keyvault**: Stored as a Key Vault reference (`content_type: application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8`).
+- **default/other types**: Stored as plain text.
+
+Each item can also include optional `label` and `tags` properties, which are preserved in the output.
+
+See `schema/config.schema.json` for the full schema definition and `scripts/convert-to-kvset.ps1` for implementation details.
 ## Example Configuration (`config/dev.json`)
 
 ```json
