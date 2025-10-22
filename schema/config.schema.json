@@ -14,7 +14,7 @@
           "key": { "type": "string" },
           "type": {
             "type": "string",
-            "enum": ["string", "json", "featureflag", "keyvault"]
+            "enum": ["string", "json", "featureflag", "keyvault", "jsonarray"]
           },
           "label": { "type": "string" },
           "tags": { "type": "object" },
@@ -32,6 +32,10 @@
           {
             "if": { "properties": { "type": { "const": "json" } } },
             "then": { "properties": { "value": { "type": ["object", "array"] } } }
+          },
+          {
+            "if": { "properties": { "type": { "const": "jsonarray" } } },
+            "then": { "properties": { "value": { "type": "array" } } }
           },
           {
             "if": { "properties": { "type": { "const": "featureflag" } } },
