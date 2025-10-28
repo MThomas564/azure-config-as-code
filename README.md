@@ -43,9 +43,9 @@ See the pipeline YAML files and schema for more details and customization option
    - The pipeline flattens all JSON config files in `config/`, converting nested objects into a flat key-value structure suitable for Azure App Configuration.
    - The flattened files are saved as `*.flattened.json` alongside the originals.
 
-2. **Publish Artefact:**
-   - The flattened config files are archived and published as a build artefact (`flattened-configs`).
-   - This artefact serves as an immutable snapshot for rollback or audit purposes.
+2. **Publish Artifact:**
+   - The flattened config files are archived and published as a build artifact (`flattened-configs`).
+   - This artifact serves as an immutable snapshot for rollback or audit purposes.
 
 3. **Dry Run Import:**
    - The pipeline performs a dry run import to Azure App Configuration using the flattened config, validating changes without applying them.
