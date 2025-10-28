@@ -6,7 +6,7 @@ This repository demonstrates a pattern for managing [Azure App Configuration](ht
 
 - **Configuration as Code:** Store your application configuration in version-controlled JSON files.
 - **Flattening Complex Structures:** Automatically flattens complex JSON objects before publishing to Azure App Configuration, allowing you to use nested or complex objects in your source files.
-- **Immutable Rollback:** Publishes the flattened configuration as a build artefact before deployment, providing an immutable rollback point for each release.
+- **Immutable Rollback:** Publishes the flattened configuration as a build artifact before deployment, providing an immutable rollback point for each release.
 - **Dry Run & Approval:** Supports a dry run mode and optional manual approval step before publishing changes to Azure App Configuration.
 
 **Pipeline-Driven:** Uses Azure Pipelines YAML for automation, including dry run, artefact publishing, and deployment.
