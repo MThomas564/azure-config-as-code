@@ -23,8 +23,7 @@ steps:
       azureSubscription: ${{ parameters.azureSubscription }}
       AppConfigurationEndpoint: ${{ parameters.appConfigEndpoint }}
       ConfigurationFile: ${{ parameters.flattenedFile }}
-      Separator: ':'
-      Depth: '1'
+      FileContentProfile: 'appconfig/kvset'
       ExcludeFeatureFlags: true
       Strict: false
       DryRun: true
@@ -41,8 +40,7 @@ steps:
       azureSubscription: ${{ parameters.azureSubscription }}
       AppConfigurationEndpoint: ${{ parameters.appConfigEndpoint }}
       ConfigurationFile: ${{ parameters.flattenedFile }}
-      Separator: ':'
-      Depth: '1'
+      FileContentProfile: 'appconfig/kvset'
       ExcludeFeatureFlags: true
       Strict: false
 
