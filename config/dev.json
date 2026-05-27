@@ -21,6 +21,58 @@
             }
         },
         {
+            "key": ".appconfig.featureflag/CheckoutFlowV2",
+            "type": "featureflag",
+            "value": {
+                "id": "CheckoutFlowV2",
+                "enabled": true,
+                "description": "Gradual rollout via percentage filter.",
+                "conditions": {
+                    "requirement_type": "Any",
+                    "client_filters": [
+                        {
+                            "name": "Microsoft.Percentage",
+                            "parameters": {
+                                "Value": 25
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "key": "BetaDashboard",
+            "type": "featureflag",
+            "value": {
+                "id": "BetaDashboard",
+                "enabled": true,
+                "description": "Target rollout to specific users and groups.",
+                "conditions": {
+                    "requirement_type": "Any",
+                    "client_filters": [
+                        {
+                            "name": "Microsoft.Targeting",
+                            "parameters": {
+                                "Audience": {
+                                    "Users": [
+                                        "alice@contoso.com",
+                                        "bob@contoso.com"
+                                    ],
+                                    "Groups": [
+                                        {
+                                            "Name": "BetaUsers",
+                                            "RolloutPercentage": 50
+                                        }
+                                    ],
+                                    "DefaultRolloutPercentage": 5
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
             "key": "MaxItems",
             "value": 100,
             "type": "string"

@@ -8,73 +8,165 @@
     "items": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": ["key", "value", "type"],
-        "properties": {
-          "key": { "type": "string" },
-          "type": {
-            "type": "string",
-            "enum": ["string", "json", "featureflag", "keyvault", "jsonarray"]
-          },
-          "label": { "type": "string" },
-          "tags": { "type": "object" },
-          "value": {
-            "oneOf": [
-              { "type": "string" },
-              { "type": "number" },
-              { "type": "boolean" },
-              { "type": "object" },
-              { "type": "array" }
-            ]
-          }
-        },
-        "allOf": [
-          {
-            "if": { "properties": { "type": { "const": "json" } } },
-            "then": { "properties": { "value": { "type": ["object", "array"] } } }
-          },
-          {
-            "if": { "properties": { "type": { "const": "jsonarray" } } },
-            "then": { "properties": { "value": { "type": "array" } } }
-          },
-          {
-            "if": { "properties": { "type": { "const": "featureflag" } } },
-            "then": {
-              "properties": {
-                "value": {
-                  "type": "object",
-                  "required": ["id", "enabled"],
-                  "properties": {
-                    "id": { "type": "string" },
-                    "enabled": { "type": "boolean" },
-                    "conditions": {
-                      "type": "object",
-                      "properties": {
-                        "client_filters": { "type": "array" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": { "properties": { "type": { "const": "keyvault" } } },
-            "then": {
-              "properties": {
-                "value": {
-                  "type": "object",
-                  "required": ["uri"],
-                  "properties": {
-                    "uri": { "type": "string", "pattern": "^https://.*\\.vault\\.azure\\.net/secrets/.*" }
-                  }
-                }
-              }
-            }
-          }
-        ]
+        "$ref": "#/$defs/configItem"
       }
     }
   },
-  "required": ["items"]
+  "required": ["items"],
+  "$defs": {
+    "configItem": {
+      "type": "object",
+      "required": ["key", "value", "type"],
+      "properties": {
+        "key": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["string", "json", "featureflag", "keyvault", "jsonarray"]
+        },
+        "label": { "type": "string" },
+        "tags": { "type": "object" },
+        "value": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "object" },
+            { "type": "array" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "json" } } },
+          "then": { "properties": { "value": { "type": ["object", "array"] } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "jsonarray" } } },
+          "then": { "properties": { "value": { "type": "array" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "featureflag" } } },
+          "then": { "properties": { "value": { "$ref": "#/$defs/featureFlagValue" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "keyvault" } } },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "required": ["uri"],
+                "properties": {
+                  "uri": { "type": "string", "pattern": "^https://.*\\.vault\\.azure\\.net/secrets/.*" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "featureFlagValue": {
+      "type": "object",
+      "required": ["id", "enabled"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "enabled": { "type": "boolean" },
+        "description": { "type": "string" },
+        "conditions": { "$ref": "#/$defs/featureFlagConditions" }
+      },
+      "additionalProperties": true
+    },
+    "featureFlagConditions": {
+      "type": "object",
+      "properties": {
+        "requirement_type": { "type": "string", "enum": ["Any", "All"] },
+        "client_filters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/clientFilter" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "clientFilter": {
+      "oneOf": [
+        { "$ref": "#/$defs/percentageClientFilter" },
+        { "$ref": "#/$defs/targetingClientFilter" },
+        { "$ref": "#/$defs/genericClientFilter" }
+      ]
+    },
+    "genericClientFilter": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "enum": ["Microsoft.Percentage", "Microsoft.Targeting"]
+          }
+        },
+        "parameters": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "percentageClientFilter": {
+      "type": "object",
+      "required": ["name", "parameters"],
+      "properties": {
+        "name": { "const": "Microsoft.Percentage" },
+        "parameters": {
+          "type": "object",
+          "required": ["Value"],
+          "properties": {
+            "Value": { "type": "number", "minimum": 0, "maximum": 100 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "targetingClientFilter": {
+      "type": "object",
+      "required": ["name", "parameters"],
+      "properties": {
+        "name": { "const": "Microsoft.Targeting" },
+        "parameters": {
+          "type": "object",
+          "required": ["Audience"],
+          "properties": {
+            "Audience": { "$ref": "#/$defs/targetingAudience" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "targetingAudience": {
+      "type": "object",
+      "properties": {
+        "Users": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "Groups": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/targetingGroup" }
+        },
+        "DefaultRolloutPercentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": true
+    },
+    "targetingGroup": {
+      "type": "object",
+      "required": ["Name", "RolloutPercentage"],
+      "properties": {
+        "Name": { "type": "string", "minLength": 1 },
+        "RolloutPercentage": { "type": "number", "minimum": 0, "maximum": 100 }
+      },
+      "additionalProperties": true
+    }
+  }
 }

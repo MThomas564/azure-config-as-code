@@ -64,11 +64,20 @@ Your configuration schema supports several data types, each handled specifically
 - **string**: Stored as plain text (`content_type: text/plain`).
 - **json**: Stored as a compressed JSON string (`content_type: application/json`).
 - **jsonarray**: Each array item is split into individual keys with an index (e.g., `key:0`, `key:1`), stored as compressed JSON (`content_type: application/json`).
-- **featureflag**: Stored in Azure App Configuration feature flag format (`content_type: application/vnd.microsoft.appconfig.ff+json;charset=utf-8`). Keys are prefixed with `.appconfig.featureflag/` if not already present.
+- **featureflag**: Stored in Azure App Configuration feature flag format (`content_type: application/vnd.microsoft.appconfig.ff+json;charset=utf-8`). Keys are prefixed with `.appconfig.featureflag/` if not already present. Supports:
+  - `Microsoft.Percentage` filter (`parameters.Value` from `0` to `100`)
+  - `Microsoft.Targeting` filter (`parameters.Audience` with optional `Users`, `Groups`, and `DefaultRolloutPercentage` from `0` to `100`)
+  - Custom filters (`name` + optional object `parameters`)
 - **keyvault**: Stored as a Key Vault reference (`content_type: application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8`).
 - **default/other types**: Stored as plain text.
 
 Each item can also include optional `label` and `tags` properties, which are preserved in the output.
+
+For feature flags, `conditions.requirement_type` is supported with values `Any` or `All`. During conversion, missing `conditions` are normalized to:
+- `requirement_type: "Any"`
+- `client_filters: []`
+
+Schema validation is strict for known built-in filters (`Microsoft.Percentage`, `Microsoft.Targeting`) and extensible for custom filters.
 
 See `schema/config.schema.json` for the full schema definition and `scripts/convert-to-kvset.ps1` for implementation details.
 ## Example Configuration (`config/dev.json`)
@@ -82,6 +91,60 @@ See `schema/config.schema.json` for the full schema definition and `scripts/conv
       { "Id": "tenant1", "Name": "Tenant One", "EnableLookup": true },
       { "Id": "tenant2", "Name": "Tenant Two", "EnableLookup": false }
     ]
+  }
+}
+```
+
+### Feature Flag Filter Examples
+
+#### Gradual rollout with percentage filter
+
+```json
+{
+  "key": ".appconfig.featureflag/CheckoutFlowV2",
+  "type": "featureflag",
+  "value": {
+    "id": "CheckoutFlowV2",
+    "enabled": true,
+    "conditions": {
+      "requirement_type": "Any",
+      "client_filters": [
+        {
+          "name": "Microsoft.Percentage",
+          "parameters": {
+            "Value": 25
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Targeted rollout for subset of users/groups
+
+```json
+{
+  "key": ".appconfig.featureflag/BetaDashboard",
+  "type": "featureflag",
+  "value": {
+    "id": "BetaDashboard",
+    "enabled": true,
+    "conditions": {
+      "requirement_type": "Any",
+      "client_filters": [
+        {
+          "name": "Microsoft.Targeting",
+          "parameters": {
+            "Audience": {
+              "Users": ["alice@contoso.com", "bob@contoso.com"],
+              "Groups": [{ "Name": "BetaUsers", "RolloutPercentage": 50 }],
+              "DefaultRolloutPercentage": 5
+            }
+          }
+        }
+      ]
+    }
   }
 }
 ```
