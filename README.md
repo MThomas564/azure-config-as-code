@@ -189,7 +189,7 @@ The `type` field controls how the value is handled by the pipeline:
 
 ## Licence
 
-This repository is provided as an example. Adapt and use as needed for your organisation.
+Licensed under the MIT Licence. See [LICENSE](LICENSE) for details.
 
 ---
 
