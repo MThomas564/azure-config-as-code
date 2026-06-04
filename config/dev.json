@@ -13,7 +13,7 @@
             "type": "string"
         },
         {
-            "key": ".appconfig.featureflag/FeatureFlag",
+            "key": "FeatureFlag",
             "type": "featureflag",
             "value": {
                 "id": "MyFeature",

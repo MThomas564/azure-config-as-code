@@ -71,18 +71,88 @@ Your configuration schema supports several data types, each handled specifically
 Each item can also include optional `label` and `tags` properties, which are preserved in the output.
 
 See `schema/config.schema.json` for the full schema definition and `scripts/convert-to-kvset.ps1` for implementation details.
-## Example Configuration (`config/dev.json`)
+
+## Configuration File Structure
+
+All configuration files live in the `config/` directory and must conform to the JSON schema in `schema/config.schema.json`. Each file contains an `items` array where each entry has a `key`, `type`, `value`, and optionally a `label` and `tags`.
+
+The `type` field controls how the value is handled by the pipeline:
+
+| Type | Description |
+|------|-------------|
+| `string` | A plain string value |
+| `json` | A JSON object — stored as a serialised JSON string in App Config |
+| `jsonarray` | A JSON array — stored as a serialised JSON string in App Config |
+| `featureflag` | An Azure App Configuration feature flag |
+| `keyvault` | A Key Vault reference |
+
+### String example
 
 ```json
 {
-  "AppName": "MyApplication",
-  "Environment": "Development",
-  "FinBuckle:MultiTenant:Stores:ConfigurationStore": {
-    "Tenants": [
-      { "Id": "tenant1", "Name": "Tenant One", "EnableLookup": true },
-      { "Id": "tenant2", "Name": "Tenant Two", "EnableLookup": false }
-    ]
-  }
+  "items": [
+    {
+      "key": "MyApp:Settings:ApiUrl",
+      "type": "string",
+      "value": "https://api.example.com",
+      "label": "production"
+    }
+  ]
+}
+```
+
+### JSON example
+
+```json
+{
+  "items": [
+    {
+      "key": "MyApp:Settings:Tenants",
+      "type": "json",
+      "value": {
+        "Tenants": [
+          { "Id": "tenant1", "Name": "Tenant One" },
+          { "Id": "tenant2", "Name": "Tenant Two" }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### Feature flag example
+
+```json
+{
+  "items": [
+    {
+      "key": "MyFeature",
+      "type": "featureflag",
+      "value": {
+        "id": "MyFeature",
+        "enabled": true,
+        "conditions": {
+          "client_filters": []
+        }
+      }
+    }
+  ]
+}
+```
+
+### Key Vault reference example
+
+```json
+{
+  "items": [
+    {
+      "key": "MyApp:Secrets:ApiKey",
+      "type": "keyvault",
+      "value": {
+        "uri": "https://my-vault.vault.azure.net/secrets/my-api-key"
+      }
+    }
+  ]
 }
 ```
 
@@ -119,7 +189,7 @@ See `schema/config.schema.json` for the full schema definition and `scripts/conv
 
 ## Licence
 
-This repository is provided as an example. Adapt and use as needed for your organisation.
+Licensed under the MIT Licence. See [LICENSE](LICENSE) for details.
 
 ---
 
