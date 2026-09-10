@@ -90,6 +90,49 @@
                     }
                 ],
             "type": "json"
+        },
+        {
+            "key": "Finbuckle:MultiTenant:Stores:ConfigurationStore:Applications",
+            "value": [
+                {
+                    "Id": "catalog-api",
+                    "Name": "Catalog API",
+                    "Environment": "Development",
+                    "Enabled": true,
+                    "Tenants": [
+                        {
+                            "Identifier": "tenant-blue",
+                            "DisplayName": "Blue Retail",
+                            "Features": ["catalog", "recommendations"]
+                        },
+                        {
+                            "Identifier": "tenant-green",
+                            "DisplayName": "Green Wholesale",
+                            "Features": ["catalog", "bulk-pricing"]
+                        }
+                    ]
+                },
+                {
+                    "Id": "orders-api",
+                    "Name": "Orders API",
+                    "Environment": "Development",
+                    "Enabled": true,
+                    "Tenants": [
+                        {
+                            "Identifier": "tenant-blue",
+                            "DisplayName": "Blue Retail",
+                            "Features": ["orders", "returns"]
+                        },
+                        {
+                            "Identifier": "tenant-gold",
+                            "DisplayName": "Gold Enterprise",
+                            "Features": ["orders", "priority-support"]
+                        }
+                    ]
+                }
+            ],
+            "type": "jsonarray",
+            "flattenDepth": 1
         }
     ]
 }
