@@ -6,6 +6,27 @@ param(
     [string]$OutputFile = "config/devKV.kvset.json"
 )
 
+function ConvertTo-FlatKV {
+      param([string]$Prefix, $Value, [int]$Depth)
+
+      $isObj = $Value -is [pscustomobject]
+      $isArr = ($Value -is [System.Collections.IEnumerable]) -and ($Value -isnot [string])
+
+      if ($Depth -le 0 -or (-not $isObj -and -not $isArr)) {
+          return ,([pscustomobject]@{ Key = $Prefix; Value = $Value; Complex = ($isObj -or $isArr) })
+      }
+      $out = @()
+      if ($isArr) {
+          $i = 0
+          foreach ($el in $Value) { $out += ConvertTo-FlatKV "${Prefix}:${i}" $el ($Depth-1); $i++ }
+      } else {
+          foreach ($p in $Value.PSObject.Properties) { $out += ConvertTo-FlatKV "${Prefix}:$($p.Name)" $p.Value
+  ($Depth-1) }
+      }
+      return $out
+  }
+
+
 $schema = Get-Content $InputFile | ConvertFrom-Json
 $kvset = @()
 
@@ -43,20 +64,21 @@ foreach ($item in $schema.items) {
             $kvset += $kvObj
         }
         "jsonarray" {
-            # Split array into individual indexed items
-            $contentType = "application/json"
+            $depth = if ($item.PSObject.Properties["flattenDepth"]) { [int]$item.flattenDepth } else { 0 }
             $index = 0
             foreach ($arrayItem in $value) {
-                $indexedKey = "${key}:${index}"
-                $itemValue = $arrayItem | ConvertTo-Json -Compress -Depth 100
-                $kvObj = [ordered]@{
-                    key = $indexedKey
-                    value = $itemValue
-                    content_type = $contentType
-                    tags = $tags
+                $base = "${key}:${index}"
+                if ($depth -le 0) {
+                    $kvset += (New-KvObj $base ($arrayItem | ConvertTo-Json -Compress -Depth 100) "application/json" $tags $label)
+                } else {
+                    foreach ($leaf in (ConvertTo-FlatKV $base $arrayItem $depth)) {
+                        if ($leaf.Complex) {
+                            $kvset += (New-KvObj $leaf.Key ($leaf.Value | ConvertTo-Json -Compress -Depth 100) "application/json" $tags $label)
+                        } else {
+                            $kvset += (New-KvObj $leaf.Key ([string]$leaf.Value) "text/plain" $tags $label)
+                        }
+                    }
                 }
-                if ($label) { $kvObj.label = $label }
-                $kvset += $kvObj
                 $index++
             }
         }
