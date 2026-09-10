@@ -9,22 +9,53 @@ param(
 function ConvertTo-FlatKV {
       param([string]$Prefix, $Value, [int]$Depth)
 
-      $isObj = $Value -is [pscustomobject]
       $isArr = ($Value -is [System.Collections.IEnumerable]) -and ($Value -isnot [string])
+      $isObj = $Value -is [pscustomobject]
 
-      if ($Depth -le 0 -or (-not $isObj -and -not $isArr)) {
-          return ,([pscustomobject]@{ Key = $Prefix; Value = $Value; Complex = ($isObj -or $isArr) })
+      if ($Depth -le 0 -or (-not $isArr -and -not $isObj)) {
+          return ,([pscustomobject]@{ Key = $Prefix; Value = $Value; Complex = $true })
       }
       $out = @()
       if ($isArr) {
           $i = 0
           foreach ($el in $Value) { $out += ConvertTo-FlatKV "${Prefix}:${i}" $el ($Depth-1); $i++ }
       } else {
-          foreach ($p in $Value.PSObject.Properties) { $out += ConvertTo-FlatKV "${Prefix}:$($p.Name)" $p.Value
-  ($Depth-1) }
+          $baseValue = [ordered]@{}
+          foreach ($p in $Value.PSObject.Properties) {
+              $propertyIsArray = ($p.Value -is [System.Collections.IEnumerable]) -and ($p.Value -isnot [string])
+              if ($propertyIsArray) {
+                  $out += ConvertTo-FlatKV "${Prefix}:$($p.Name)" $p.Value $Depth
+              } else {
+                  $baseValue[$p.Name] = $p.Value
+              }
+          }
+          if ($baseValue.Count -gt 0) {
+              $out = @([pscustomobject]@{ Key = $Prefix; Value = [pscustomobject]$baseValue; Complex = $true }) + $out
+          }
+      }
+      if ($out.Count -eq 0) {
+          return ,([pscustomobject]@{ Key = $Prefix; Value = $Value; Complex = $true })
       }
       return $out
-  }
+}
+
+function New-KvObj {
+    param(
+        [string]$Key,
+        $Value,
+        [string]$ContentType,
+        $Tags = @{},
+        [string]$Label = $null
+    )
+    $kvObj = [ordered]@{
+        key = $Key
+        value = $Value
+        content_type = $ContentType
+        tags = $Tags
+    }
+    if($Label) {$kvObj.label = $Label}
+    return $kvObj
+}
 
 
 $schema = Get-Content $InputFile | ConvertFrom-Json
