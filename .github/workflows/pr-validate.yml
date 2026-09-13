@@ -1,0 +1,28 @@
+# GitHub Actions equivalent of .pipelines/pr-validate.yaml
+# Validates config files against the JSON schema on pull requests to main.
+name: PR Validate
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'config/*.json'
+      - 'schema/*.schema.json'
+
+jobs:
+  validate:
+    name: Validate config files against schema
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate config files against schema
+        shell: pwsh
+        run: |
+          [array]$jsonFiles = Get-ChildItem ./config/*.json | Select-Object -ExpandProperty FullName
+          foreach ($filePath in $jsonFiles) {
+            Write-Host "Validating $filePath"
+            Get-Content $filePath -Raw | Test-Json -SchemaFile ./schema/config.schema.json
+          }

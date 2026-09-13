@@ -1,0 +1,46 @@
+name: 'Azure App Configuration Import'
+description: >-
+  Imports a flattened KVSet file into Azure App Configuration. Mirrors the
+  AzureAppConfigurationImport@10 steps in .pipelines/deploy-template.yaml and
+  supports a dry-run mode. Requires an active Azure login (see azure/login).
+
+inputs:
+  flattenedFile:
+    description: 'Path to the flattened KVSet JSON file to import.'
+    required: true
+  appConfigEndpoint:
+    description: 'Endpoint URL of the target Azure App Configuration instance.'
+    required: true
+  dryRun:
+    description: 'When "true", preview the changes without applying them.'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Import to Azure App Configuration
+      shell: bash
+      env:
+        FLATTENED_FILE: ${{ inputs.flattenedFile }}
+        APP_CONFIG_ENDPOINT: ${{ inputs.appConfigEndpoint }}
+        DRY_RUN: ${{ inputs.dryRun }}
+      run: |
+        set -euo pipefail
+        args=(
+          --endpoint "$APP_CONFIG_ENDPOINT"
+          --auth-mode login
+          --source file
+          --path "$FLATTENED_FILE"
+          --format json
+          --profile appconfig/kvset
+          --skip-features
+          --yes
+        )
+        if [ "$DRY_RUN" = "true" ]; then
+          echo "Performing dry run import of $FLATTENED_FILE"
+          args+=(--dry-run)
+        else
+          echo "Importing $FLATTENED_FILE to $APP_CONFIG_ENDPOINT"
+        fi
+        az appconfig kv import "${args[@]}"

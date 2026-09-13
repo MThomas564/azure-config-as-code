@@ -1,0 +1,34 @@
+name: 'Prepare Configuration Files'
+description: >-
+  Validates every config file in config/ against schema/config.schema.json,
+  converts the typed configs to Azure App Configuration KVSet format and
+  uploads the result as the "flattened-configs" artifact. Mirrors
+  .pipelines/prepare-template.yaml.
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate config files against schema
+      shell: pwsh
+      run: |
+        [array]$jsonFiles = Get-ChildItem ./config/*.json | Select-Object -ExpandProperty FullName
+        foreach ($filePath in $jsonFiles) {
+          Write-Host "Validating $filePath"
+          Get-Content $filePath -Raw | Test-Json -SchemaFile ./schema/config.schema.json
+        }
+
+    - name: Convert all typed configs to KVSet format
+      shell: pwsh
+      run: |
+        $typedFiles = Get-ChildItem -Path config -Filter *.json
+        foreach ($file in $typedFiles) {
+          $outName = $file.BaseName + ".kv.json"
+          pwsh -File ./scripts/convert-to-kvset.ps1 -InputFile $file.FullName -OutputFile (Join-Path $file.DirectoryName $outName)
+        }
+
+    - name: Publish flattened configs artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: flattened-configs
+        path: config
+        if-no-files-found: error

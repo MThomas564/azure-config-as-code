@@ -1,0 +1,86 @@
+# GitHub Actions equivalent of .pipelines/deploy.yaml (+ deploy-template.yaml).
+# Prepares the configuration, performs a dry-run import, and — after an
+# optional manual approval — publishes to Azure App Configuration.
+#
+# Configuration (Settings -> Secrets and variables -> Actions):
+#   Variables:
+#     APP_CONFIG_ENDPOINT      # e.g. https://<your-app-config-name>.azconfig.io  ({{APP CONFIG HERE}})
+#   Secrets (OIDC login, replaces the ADO service connection {{AZURE SUBSCRIPTION HERE}}):
+#     AZURE_CLIENT_ID
+#     AZURE_TENANT_ID
+#     AZURE_SUBSCRIPTION_ID
+#
+# Optional manual approval: configure required reviewers on the "dev"
+# environment (Settings -> Environments -> dev). This gates the deploy-dev job,
+# mirroring the ManualValidation step in the ADO template.
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write   # required for azure/login OIDC
+  contents: read
+
+jobs:
+  prepare:
+    name: Prepare Configuration Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare configuration
+        uses: ./.github/actions/prepare-config
+
+  dry-run-dev:
+    name: Dry Run (dev)
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download flattened configs
+        uses: actions/download-artifact@v4
+        with:
+          name: flattened-configs
+          path: flattened-configs
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Dry run import to Azure App Configuration
+        uses: ./.github/actions/appconfig-import
+        with:
+          flattenedFile: flattened-configs/dev.kv.json
+          appConfigEndpoint: ${{ vars.APP_CONFIG_ENDPOINT }}
+          dryRun: 'true'
+
+  deploy-dev:
+    name: Deploy to Dev
+    needs: dry-run-dev
+    runs-on: ubuntu-latest
+    environment: dev   # add required reviewers here for optional manual approval
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download flattened configs
+        uses: actions/download-artifact@v4
+        with:
+          name: flattened-configs
+          path: flattened-configs
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Publish to Azure App Configuration
+        uses: ./.github/actions/appconfig-import
+        with:
+          flattenedFile: flattened-configs/dev.kv.json
+          appConfigEndpoint: ${{ vars.APP_CONFIG_ENDPOINT }}
+          dryRun: 'false'
